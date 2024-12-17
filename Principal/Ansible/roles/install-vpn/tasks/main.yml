@@ -1,0 +1,24 @@
+- name: Récupérer OpenVPN
+  ansible.builtin.get_url:
+    url: https://raw.githubusercontent.com/Angristan/openvpn-install/master/openvpn-install.sh
+    dest: /tmp/openvpn-install.sh
+
+- name: Autoriser l'exécution
+  ansible.builtin.shell: chmod +x openvpn-install.sh
+  args:
+    chdir: /tmp/
+
+- name: Installation d'OpenVPN
+  ansible.builtin.shell: AUTO_INSTALL=y ./openvpn-install.sh
+  args:
+    chdir: /tmp/
+
+#- name: Créer les certificats
+#  include_tasks: /travail/roles/install-vpn/tasks/certificats.yml
+
+- name: Démarrer le serveur VPN et l'activer au démarrage
+  service:
+    name: openvpn
+    state: started
+    enabled: true
+    use: service

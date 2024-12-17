@@ -1,0 +1,42 @@
+- name: Créer un répertoire pour les certificats
+  ansible.builtin.file:
+    path: /travail/easy-rsa
+    state: directory
+
+- name: Copier les certificats par défaut de EasyRSA
+  ansible.builtin.copy:
+    src: /usr/share/easy-rsa/
+    dest: /travail/easy-rsa/
+    remote_src: yes
+
+- name: Initialiser le répertoire PKI
+  ansible.builtin.shell: ./easyrsa init-pki
+  args:
+    chdir: /travail/easy-rsa
+
+- name: Création du certificat (CA)
+  ansible.builtin.shell: |
+    $root = "root"
+    $name = "ServeurSAE"
+    
+    printf '%s\n' $root $root $root $root $name | ./easyrsa build-ca
+    printf '%s\n' $root $root $root $root $name | ./easyrsa build-ca
+  args:
+    chdir: /travail/easy-rsa
+
+- name: Création du certificat serveur
+  ansible.builtin.shell: ./easyrsa build-server-full ServeurSae nopass
+  args:
+    chdir: /travail/easy-rsa
+
+- name: Générer les paramètres de Diffie-Hellman
+  ansible.builtin.shell: ./easyrsa gen-dh
+  args:
+    chdir: /travail/easy-rsa
+
+- name: Création du certificat client
+  ansible.builtin.shell: ./easyrsa build-client-full edouard nopass
+  args:
+    chdir: /travail/easy-rsa
+
+

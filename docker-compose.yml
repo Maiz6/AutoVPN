@@ -1,0 +1,31 @@
+services:
+  principal:
+    build: ./Principal
+    networks:
+      dev:
+        ipv4_address: 192.168.2.10
+    depends_on:
+      - server
+
+  server:
+    build: ./Server
+    privileged: true
+    networks:
+      dev:
+        ipv4_address: 192.168.2.20
+    cap_add:
+      - NET_ADMIN
+
+  client:
+    build: ./Client
+    networks:
+      dev:
+        ipv4_address: 192.168.2.30
+    volumes:
+      - "./Client/certificats:/travail/certificats"
+networks:
+  dev:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.2.0/24

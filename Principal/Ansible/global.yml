@@ -1,0 +1,15 @@
+- hosts: server
+  become: true
+  gather_facts: false
+  vars:
+    shell: /bin/bash
+  roles:
+    - role: install-vpn
+
+- hosts: client
+  become: true
+  gather_facts: false
+  vars:
+    shell: /bin/bash
+  roles:
+    - role: install-client
