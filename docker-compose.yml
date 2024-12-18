@@ -23,6 +23,11 @@ services:
         ipv4_address: 192.168.2.30
     volumes:
       - "./Client/certificats:/travail/certificats"
+    depends_on:
+      - server
+    cap_add:
+      - NET_ADMIN
+
 networks:
   dev:
     driver: bridge

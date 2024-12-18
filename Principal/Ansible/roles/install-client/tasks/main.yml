@@ -1,0 +1,70 @@
+- name: Installation d'OpenVPN
+  ansible.builtin.package:
+    name:
+      - openvpn
+      - python3-cryptography
+    state: present
+
+- name: Générer la clé privée (RSA, 4096 bits)
+  community.crypto.openssl_privatekey:
+    path: /travail/certificats/ta.key
+
+#- name: Générer un certificat TLS
+#  community.crypto.x509_certificate:
+#    path: /app/certificates/certificate.pem
+#    privatekey_path: /app/certificates/certificate.key
+#    provider: selfsigned
+
+- name: Copier le fichier client d'exemple
+  ansible.builtin.copy:
+    remote_src: yes
+    src: "{{ cert_dir }}/client.conf"
+    dest: "{{ workdir }}/{{ client_name }}.ovpn"
+
+- name: Configurer l'IP et le port à partir du fichier d'exemple
+  lineinfile:
+    dest: "{{ workdir }}/{{ client_name }}.ovpn"
+    regexp: "^{{ item.regex | regex_escape() }}"
+    line: "{{ item.value }}"
+  with_items:
+    - { regex: 'remote my-server-1 1194', value: 'remote 192.168.2.20 1194' }
+    - { regex: ';user nobody', value: 'user edouard' }
+    - { regex: 'ca ca.crt', value: '#ca ca.crt' }
+    - { regex: 'cert client.crt', value: '#cert client.crt' }
+    - { regex: 'key client.key', value: '#key client.key' }
+    - { regex: 'tls-auth ta.key 1', value: '#tls-auth ta.key 1' }
+
+- name: Générer le fichier client
+  ansible.builtin.shell: "{{ item }}"
+  with_items:
+    - echo -e '<ca>' >> {{ workdir }}/{{ client_name }}.ovpn
+    - cat {{ cert_dir }}/easy-rsa/pki/ca.crt >> {{ workdir }}/{{ client_name }}.ovpn
+    - echo -e '</ca>\n<cert>' >> {{ workdir }}/{{ client_name }}.ovpn
+    - cat {{ cert_dir }}/easy-rsa/pki/issued/{{ client_name }}.crt >> {{ workdir }}/{{ client_name }}.ovpn
+    - echo -e '</cert>\n<key>' >> {{ workdir }}/{{ client_name }}.ovpn
+    - cat {{ cert_dir }}/easy-rsa/pki/private/{{ client_name }}.key >> {{ workdir }}/{{ client_name }}.ovpn
+#     - echo -e '</key><tls-auth>' >> {{ workdir }}/{{ client_name }}.ovpn
+    - echo -e '</key>' >> {{ workdir }}/{{ client_name }}.ovpn
+#    - cat {{ cert_dir }}/ta.key >> {{ workdir }}/{{ client_name }}.ovpn
+#    - echo -e '</tls-auth>' >> {{ workdir }}/{{ client_name }}.ovpn
+#    - echo -e 'key-direction 1' >> {{ workdir }}/{{ client_name }}.ovpn
+  args:
+    executable: /bin/bash
+
+- name: Copier le fichier de config client dans le bon répertoire
+  ansible.builtin.copy:
+    remote_src: yes
+    src: /travail/edouard.ovpn
+    dest: /etc/openvpn/client/
+
+- name: Création de l'utilisateur {{ client_name }}
+  ansible.builtin.user:
+    name: "{{ client_name }}"
+    password: "{{ client_name }}"
+    shell: /bin/bash
+    groups: admin
+    append: yes
+
+- name: Connexion du client au serveur
+  ansible.builtin.shell: openvpn --client --config /etc/openvpn/client/edouard.ovpn
+
