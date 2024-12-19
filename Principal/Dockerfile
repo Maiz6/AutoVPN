@@ -11,7 +11,6 @@ RUN virtualenv ansible
 RUN . ansible/bin/activate
 RUN python3 -m pip install ansible
 
-# Running Ansible playbooks from the run.sh script
 WORKDIR /travail
 COPY Ansible .
 RUN chmod +x lancement.sh

@@ -1,4 +1,4 @@
-- name: Installation d'OpenVPN
+- name: Installation d'OpenVPN et des dépendances
   ansible.builtin.package:
     name:
       - openvpn
@@ -15,7 +15,7 @@
 #    privatekey_path: /app/certificates/certificate.key
 #    provider: selfsigned
 
-- name: Copier le fichier client d'exemple
+- name: Copier le fichier client d'exemple par défaut d'OpenVPN
   ansible.builtin.copy:
     remote_src: yes
     src: "{{ cert_dir }}/client.conf"
